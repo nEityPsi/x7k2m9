@@ -118,7 +118,8 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports";
 const EL_GAMES = "https://api-live.euroleague.net/v2/competitions/E/seasons/";
 const EL_LIVE = "https://live.euroleague.net/api/Header";
-const STORE_KEY = "misdirectos.ligas.v3";
+const STORE_KEY = "misdirectos.ligas.v4";
+const MY_LEAGUES = ["esp.1", "esp.2", "esp.copa_del_rey", "uefa.champions", "uefa.europa", "uefa.europa.conf", "uefa.nations", "eng.1", "ita.1", "ger.1", "fra.1", "por.1", "euroleague", "nba", "wnba", "nfl"];
 const SPORTS = { soccer: "Fútbol", basketball: "Baloncesto", football: "Fútbol americano" };
 const LEAGUES = [
   { id: "esp.1", sport: "soccer", name: "LaLiga" },
@@ -147,7 +148,7 @@ const LEAGUES = [
 ];
 
 const saved = loadSelection();
-const S = { off: 0, selected: new Set(saved || []), cache: new Map(), open: new Set(), failed: new Set(),
+const S = { off: 0, selected: new Set(saved || MY_LEAGUES), cache: new Map(), open: new Set(), failed: new Set(),
   demo: false, offline: false, everOk: false, loading: false, pending: false, lastSync: null };
 
 /* ---------- utilidades ---------- */
@@ -539,7 +540,7 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => { if (!document.hidden && !S.demo && S.off === 0 && document.getElementById("picker").hidden) refresh(); }, 30000);
 
 render();
-if (!saved) openPicker(); else refresh();
+refresh();
 })();
 </script>
 
