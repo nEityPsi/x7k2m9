@@ -64,7 +64,9 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 .ex{display:grid;grid-template-columns:minmax(0,1fr) 20px 74px 20px minmax(0,1fr);column-gap:6px;padding:0 0 10px;font-size:12.5px;color:var(--muted);line-height:1.5}
 .ex .eh{grid-column:1;text-align:right}
 .ex .ea{grid-column:5}
-.ex .tv{grid-column:1 / -1;text-align:center;margin-top:2px}
+.ex .full{grid-column:1 / -1;text-align:center}
+.ex .lab{grid-column:2 / 5;text-align:center;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;align-self:center}
+.ex .full{margin-top:4px}
 .rc{display:inline-block;width:6px;height:9px;border-radius:1px;background:var(--live);margin-right:4px}
 
 .empty{padding:40px 0 8px;color:var(--muted);text-align:center}
@@ -140,7 +142,6 @@ const MY_LEAGUES = ["esp.1", "esp.2", "esp.copa_del_rey", "uefa.champions", "uef
 const SPORTS = { soccer: "Fútbol", basketball: "Baloncesto", football: "Fútbol americano" };
 const LEAGUES = [
   { id: "esp.1", sport: "soccer", name: "LaLiga" },
-  { id: "esp.2", sport: "soccer", name: "LaLiga Hypermotion" },
   { id: "esp.copa_del_rey", sport: "soccer", name: "Copa del Rey" },
   { id: "uefa.champions", sport: "soccer", name: "Champions League" },
   { id: "uefa.europa", sport: "soccer", name: "Europa League" },
@@ -157,38 +158,16 @@ const LEAGUES = [
   { id: "arg.1", sport: "soccer", name: "Liga Argentina" },
   { id: "bra.1", sport: "soccer", name: "Brasileirão" },
   { id: "euroleague", sport: "basketball", name: "Euroliga", src: "el" },
+  { id: "nfl", sport: "football", name: "NFL" },
   { id: "nba", sport: "basketball", name: "NBA" },
   { id: "wnba", sport: "basketball", name: "WNBA" },
   { id: "mens-college-basketball", sport: "basketball", name: "NCAA" },
-  { id: "nfl", sport: "football", name: "NFL" },
-  { id: "college-football", sport: "football", name: "NCAA Football" }
+  { id: "college-football", sport: "football", name: "NCAA Football" },
+  { id: "esp.2", sport: "soccer", name: "LaLiga Hypermotion" }
 ];
 
 const CACHE_KEY = "misdirectos.datos.v1";
 const EL_KEY = "misdirectos.euroliga.v1";
-/* Dónde se ve en España (temporada 2026-27). [texto corto, texto completo] */
-const TV = {
-  "esp.1": ["M+ · DAZN", "Movistar Plus+ o DAZN, según el partido"],
-  "esp.2": ["Movistar+", "Movistar Plus+"],
-  "esp.copa_del_rey": ["Movistar+", "Movistar Plus+ (algunos en abierto en RTVE)"],
-  "uefa.champions": ["Movistar+", "Movistar Plus+"],
-  "uefa.europa": ["Movistar+", "Movistar Plus+"],
-  "uefa.europa.conf": ["Movistar+", "Movistar Plus+"],
-  "eng.1": ["DAZN", "DAZN"],
-  "ita.1": ["DAZN", "DAZN"],
-  "ger.1": ["DAZN", "DAZN"],
-  "fra.1": ["DAZN", "DAZN"],
-  "por.1": ["DAZN", "DAZN"],
-  "euroleague": ["Movistar+", "Movistar Plus+"]
-};
-function tvFor(lg, e){
-  if (lg.id === "uefa.nations") {
-    const names = ((e.competitions && e.competitions[0] && e.competitions[0].competitors) || []).map(c => (c.team && (c.team.displayName || "")) || "").join(" ");
-    return /Spain|España/i.test(names) ? ["La 1", "La 1 (en abierto)"] : null;
-  }
-  return TV[lg.id] || null;
-}
-
 const saved = loadSelection();
 const S = { off: 0, filter: loadFilter(), selected: new Set(saved || MY_LEAGUES), cache: new Map(), open: new Set(), failed: new Set(),
   demo: false, offline: false, everOk: false, loading: false, pending: false, lastSync: null };
@@ -226,7 +205,9 @@ function slim(e){
     id: e.id, date: e.date,
     status: { period: st.period, displayClock: st.displayClock, type: pick(st.type, ["name", "state"]) },
     competitions: [{
+      situation: c.situation ? Object.assign(pick(c.situation, ["downDistanceText", "possession", "isRedZone"]), c.situation.lastPlay ? { lastPlay: { text: c.situation.lastPlay.text } } : {}) : undefined,
       competitors: (c.competitors || []).map(x => Object.assign(pick(x, ["id", "homeAway", "score", "winner"]), {
+        record: ((x.records || []).find(r => r.type === "total" || r.name === "overall") || (x.records || [])[0] || {}).summary,
         team: pick(x.team, ["id", "displayName", "shortDisplayName", "abbreviation", "logo", "color"]),
         linescores: (x.linescores || []).map(l => ({ value: l.displayValue != null ? l.displayValue : l.value }))
       })),
@@ -565,8 +546,7 @@ function rowHTML(lg, e){
   const st = statusText(e, lg.sport);
   const long = hasScore && (String(h.score).length + String(a.score).length) > 4;
   const mid = hasScore ? esc(h.score) + "\u2009-\u2009" + esc(a.score) : esc(st || fmtTime.format(new Date(e.date)));
-  const tv = tvFor(lg, e);
-  const sub = hasScore ? st : (s === "pre" && tv ? tv[0] : "");
+  const sub = hasScore ? st : "";
   return '<button class="row ' + cls + '" type="button" data-id="' + esc(e.id) + '" data-lg="' + esc(lg.id) + '" aria-expanded="' + open + '">' +
     '<span class="h' + (h.winner ? " w" : "") + '">' + esc(nameOf(h)) + "</span>" + crest(h) +
     '<span class="mid"><span class="sc' + (long ? " long" : "") + '">' + mid + "</span>" + (sub ? '<span class="st">' + esc(sub) + "</span>" : "") + "</span>" +
@@ -574,9 +554,77 @@ function rowHTML(lg, e){
     '<div class="ex"' + (open ? "" : " hidden") + ">" + (open ? detailHTML(lg, e) : "") + "</div>";
 }
 
+/* ---------- datos extra al pulsar: líderes de basket y NFL ---------- */
+const EXTRA = new Map();
+const CATS = {
+  basketball: [["points", "Puntos"], ["rebounds", "Rebotes"], ["assists", "Asistencias"]],
+  football: [["passingYards", "Yardas pase"], ["rushingYards", "Yardas carrera"], ["receivingYards", "Yardas rec."]]
+};
+function niceName(n){
+  n = String(n || "").trim();
+  if (n.includes(",")) n = n.split(",")[0];
+  return n.toLowerCase().replace(/(^|[\s'-])\S/g, m => m.toUpperCase());
+}
+async function espnLeaders(lg, e){
+  const j = await fetchJSON(ESPN + "/" + lg.sport + "/" + lg.id + "/summary?event=" + encodeURIComponent(e.id), 15000);
+  const out = {};
+  const wanted = new Set((CATS[lg.sport] || []).map(c => c[0]));
+  for (const b of j.leaders || []) {
+    const tid = String((b.team && b.team.id) || "");
+    const vals = {};
+    for (const cat of b.leaders || []) {
+      const L = cat.leaders && cat.leaders[0];
+      if (!wanted.has(cat.name) || !L || !L.athlete) continue;
+      let val = L.value != null ? Math.round(L.value) : NaN;
+      if (isNaN(val)) { const m = String(L.displayValue || "").match(/(\d+)\s*YDS/i) || String(L.displayValue || "").match(/^(\d+)/); val = m ? m[1] : ""; }
+      vals[cat.name] = (L.athlete.shortName || L.athlete.displayName) + " " + val;
+    }
+    out[tid] = vals;
+  }
+  return out;
+}
+async function elLeaders(e){
+  const code = String(e.id).replace(/^el-/, "");
+  const j = await fetchJSON("https://live.euroleague.net/api/Boxscore?gamecode=" + code + "&seasoncode=" + elSeasonCode(new Date(e.date)), 15000);
+  const stats = j.Stats || j.stats || [];
+  const { h, a } = teams(e);
+  const out = {};
+  stats.slice(0, 2).forEach((t, i) => {
+    const ps = (t.PlayersStats || t.playersStats || []).filter(p => p.Player && !/^team$/i.test(p.Player));
+    const best = k => ps.slice().sort((x, y) => (Number(y[k]) || 0) - (Number(x[k]) || 0))[0];
+    const vals = {};
+    [["Points", "points"], ["TotalRebounds", "rebounds"], ["Assistances", "assists"]].forEach(([k, cat]) => {
+      const p = best(k); if (p && Number(p[k]) > 0) vals[cat] = niceName(p.Player) + " " + p[k];
+    });
+    out[String(((i === 0 ? h : a).team || {}).id || "")] = vals;
+  });
+  return out;
+}
+function extraFresh(e){
+  const x = EXTRA.get(e.id);
+  if (!x) return false;
+  return stateOf(e) === "post" ? !x.err : Date.now() - x.at < 30000;
+}
+const INFLIGHT = new Set();
+async function loadExtra(lg, e){
+  if (lg.sport === "soccer" || stateOf(e) === "pre" || S.demo || extraFresh(e) || INFLIGHT.has(e.id)) return false;
+  INFLIGHT.add(e.id);
+  try { EXTRA.set(e.id, { at: Date.now(), data: lg.src === "el" ? await elLeaders(e) : await espnLeaders(lg, e) }); }
+  catch (err) { const old = EXTRA.get(e.id); EXTRA.set(e.id, { at: Date.now(), err: true, data: old && old.data }); }
+  finally { INFLIGHT.delete(e.id); }
+  return true;
+}
+function updateOpenDetail(lg, e){
+  const row = [...document.querySelectorAll(".row")].find(r => r.dataset.id === String(e.id));
+  if (!row || !S.open.has(e.id)) return;
+  const ex = row.nextElementSibling; const html = detailHTML(lg, e);
+  if (html) ex.innerHTML = html;
+}
+
 function detailHTML(lg, e){
   const { c, h, a } = teams(e);
-  let hs = "", as = "";
+  const s = stateOf(e);
+  let hs = "", as = "", full = "";
   if (lg.sport === "soccer") {
     const hid = String((h.team && h.team.id) || h.id || "");
     for (const d of c.details || []) {
@@ -592,13 +640,27 @@ function detailHTML(lg, e){
     }
   } else {
     const v = x => x == null ? "" : (x.displayValue != null ? x.displayValue : x.value);
-    const hl = h.linescores || [], al = a.linescores || [];
-    if (hl.length) hs = "<div>" + hl.map(v).join("  ") + "</div>";
-    if (al.length) as = "<div>" + al.map(v).join("  ") + "</div>";
+    const tid = cp => String((cp.team && cp.team.id) || cp.id || "");
+    const x = EXTRA.get(e.id), X = (x && x.data) || {};
+    const rows = [];
+    if (h.record || a.record) rows.push(["Balance", h.record || "", a.record || ""]);
+    if ((h.linescores || []).length) rows.push(["Cuartos", (h.linescores || []).map(v).join("  "), (a.linescores || []).map(v).join("  ")]);
+    for (const [cat, label] of CATS[lg.sport] || []) {
+      const hv = (X[tid(h)] || {})[cat], av = (X[tid(a)] || {})[cat];
+      if (hv || av) rows.push([label, hv || "", av || ""]);
+    }
+    const statRows = rows.map(([lab, hv, av]) => '<div class="eh">' + esc(hv) + '</div><div class="lab">' + esc(lab) + '</div><div class="ea">' + esc(av) + "</div>").join("");
+    const sit = c.situation;
+    if (s === "in" && sit && (sit.downDistanceText || (sit.lastPlay && sit.lastPlay.text))) {
+      const pos = [h, a].find(cp => String((cp.team && cp.team.id) || cp.id) === String(sit.possession || ""));
+      full += "<div>" + esc([pos && pos.team ? "Balón: " + (pos.team.abbreviation || nameOf(pos)) : "", sit.downDistanceText].filter(Boolean).join(" · ")) + "</div>";
+      if (sit.lastPlay && sit.lastPlay.text) full += "<div>" + esc(sit.lastPlay.text) + "</div>";
+    }
+    if (s !== "pre" && !S.demo && !EXTRA.has(e.id)) full += "<div>Cargando estadísticas…</div>";
+    return statRows + (full ? '<div class="full">' + full + "</div>" : "");
   }
-  const tv = tvFor(lg, e);
   return (hs ? '<div class="eh">' + hs + "</div>" : "") + (as ? '<div class="ea">' + as + "</div>" : "") +
-    (tv ? '<div class="tv">TV: ' + esc(tv[1]) + "</div>" : "");
+    (full ? '<div class="full">' + full + "</div>" : "");
 }
 
 /* ---------- vista ---------- */
@@ -650,6 +712,8 @@ function render(){
   }
   main.innerHTML = html;
   renderSync();
+  for (const { lg, e } of items) if (S.open.has(e.id) && lg.sport !== "soccer")
+    loadExtra(lg, e).then(changed => { if (changed) updateOpenDetail(lg, e); });
 }
 function renderSync(){
   const el = document.getElementById("syncBtn");
@@ -714,6 +778,7 @@ document.getElementById("main").addEventListener("click", ev => {
   const html = e ? detailHTML(lg, e) : "";
   if (!html) return;
   S.open.add(id); ex.innerHTML = html; ex.hidden = false; row.setAttribute("aria-expanded", "true");
+  loadExtra(lg, e).then(changed => { if (changed) updateOpenDetail(lg, e); });
 });
 let tx = null, ty = null;
 document.addEventListener("touchstart", ev => { if (ev.touches.length === 1) { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; } }, { passive: true });
