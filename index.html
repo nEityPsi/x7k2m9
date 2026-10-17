@@ -53,6 +53,7 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 .live .sc,.live .st{color:var(--live)}
 .live .st{font-weight:600}
 .pre .sc{font-size:15px;font-weight:500;color:var(--muted)}
+.sc.long{font-size:15.5px;letter-spacing:-.02em}
 .post .h:not(.w),.post .a:not(.w){color:var(--muted)}
 .post.draw .h,.post.draw .a{color:var(--ink)}
 .crest{position:relative;width:20px;height:20px;border-radius:50%;background:var(--c,var(--soft));color:var(--t,var(--muted));display:grid;place-items:center;font-size:9.5px;font-weight:700;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(128,128,128,.25)}
@@ -131,6 +132,7 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 const ESPN = "https://site.api.espn.com/apis/site/v2/sports";
 const EL_GAMES = "https://api-live.euroleague.net/v2/competitions/E/seasons/";
 const EL_LIVE = "https://live.euroleague.net/api/Header";
+const EL_FEED = "https://feeds.incrowdsports.com/provider/euroleague-feeds/v2/competitions/E/seasons/";
 const STORE_KEY = "misdirectos.ligas.v4";
 const FILTER_KEY = "misdirectos.filtro";
 const MY_LEAGUES = ["esp.1", "esp.2", "esp.copa_del_rey", "uefa.champions", "uefa.europa", "uefa.europa.conf", "uefa.nations", "eng.1", "ita.1", "ger.1", "fra.1", "por.1", "euroleague", "nba", "wnba", "nfl"];
@@ -191,9 +193,9 @@ function textOn(hex){
   return 0.299 * r + 0.587 * g + 0.114 * b > 165 ? "#111111" : "#ffffff";
 }
 
-async function fetchJSON(url){
+async function fetchJSON(url, ms){
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 12000);
+  const t = setTimeout(() => ctrl.abort(), ms || 12000);
   try {
     const r = await fetch(url, { signal: ctrl.signal, cache: "no-store", headers: { Accept: "application/json" } });
     if (!r.ok) { const err = new Error("HTTP " + r.status); err.http = r.status; throw err; }
@@ -228,6 +230,9 @@ function elTeam(side, played, win){
   const imgs = club.images || {};
   const c = { id: club.code, team: { id: club.code, displayName: club.name, shortDisplayName: club.abbreviatedName || club.name, logo: imgs.crest || imgs.logo || club.crest } };
   if (played && side && side.score != null) { c.score = String(side.score); c.winner = win; }
+  const p = (side && side.partials) || {};
+  const lines = [p.partials1, p.partials2, p.partials3, p.partials4].concat(Object.values(p.extraPeriods || {})).filter(v => v != null);
+  if (played && lines.some(v => Number(v) > 0)) c.linescores = lines.map(v => ({ value: v }));
   return c;
 }
 function elToEvent(g){
@@ -255,12 +260,58 @@ function applyHeader(ev, hd){
     ev.status = { type: { name: "STATUS_FINAL", state: "post" } };
   }
 }
+/* Fuente de respaldo: el feed que usa la web oficial de la Euroliga */
+function feedSide(x, live, played, win){
+  x = x || {};
+  const q = x.quarters || {};
+  const lines = ["q1", "q2", "q3", "q4", "ot1", "ot2", "ot3"].map(k => q[k]).filter(v => v != null);
+  const c = { id: x.code, team: { id: x.code, displayName: x.name, shortDisplayName: x.abbreviatedName || x.editorialName || x.name, logo: x.imageUrls && x.imageUrls.crest } };
+  if ((live || played) && x.score != null) c.score = String(x.score);
+  if (played) c.winner = win;
+  if (lines.length) c.linescores = lines.map(v => ({ value: v }));
+  return c;
+}
+function feedToEvent(g){
+  const st = String(g.status || "").toLowerCase();
+  const played = /result|final|finish|ended|played/.test(st);
+  const live = !played && (/live|progress|playing|half|break/.test(st) || g.quarter != null);
+  const hs = Number(g.home && g.home.score), as = Number(g.away && g.away.score);
+  const h = feedSide(g.home, live, played, hs > as), a = feedSide(g.away, live, played, as > hs);
+  h.homeAway = "home"; a.homeAway = "away";
+  const q = parseInt(String(g.quarter == null ? "" : g.quarter).replace(/\D/g, ""), 10) || 0;
+  const status = played ? { type: { name: "STATUS_FINAL", state: "post" } }
+    : live ? { period: q, displayClock: String(g.remainingTime || "").replace(/^0(\d)/, "$1"), type: { name: /half|break/.test(st) ? "STATUS_HALFTIME" : "STATUS_IN_PROGRESS", state: "in" } }
+    : { type: { name: "STATUS_SCHEDULED", state: "pre" } };
+  return { id: "el-" + (g.code || g.identifier), date: new Date(g.date).toISOString(), status, competitions: [{ competitors: [h, a] }] };
+}
+async function fetchEuroleagueFeed(off, code){
+  const day = dayAt(off);
+  const base = EL_FEED + code + "/games";
+  const first = await fetchJSON(base, 20000);
+  let games = (first && first.data) || [];
+  const rounds = games.map(g => (g.round && g.round.round) || g.round).filter(n => typeof n === "number");
+  if (rounds.length) {
+    const r = Math.max(...rounds);
+    const more = await Promise.all([r - 2, r - 1, r + 1, r + 2].filter(n => n > 0).map(n =>
+      fetchJSON(base + "?phaseTypeCode=RS&roundNumber=" + n, 20000).then(j => (j && j.data) || []).catch(() => [])));
+    more.forEach(list => { games = games.concat(list); });
+  }
+  const seen = new Set();
+  return games.filter(g => {
+    const id = g.code || g.identifier; if (seen.has(id)) return false; seen.add(id);
+    const d = new Date(g.date); return !isNaN(d) && sameDay(d, day);
+  }).map(feedToEvent).sort(byDate);
+}
+
 async function fetchEuroleague(off){
   const day = dayAt(off);
   const code = elSeasonCode(day);
   if (!elSeason || elSeason.code !== code || Date.now() - elSeason.at > 10 * 60000) {
-    const j = await fetchJSON(EL_GAMES + code + "/games");
+    let j;
+    try { j = await fetchJSON(EL_GAMES + code + "/games", 25000); }
+    catch (e) { return fetchEuroleagueFeed(off, code); }
     elSeason = { code, at: Date.now(), games: Array.isArray(j) ? j : (j.data || j.games || []) };
+    if (!elSeason.games.length) { elSeason = null; return fetchEuroleagueFeed(off, code); }
   }
   const now = Date.now();
   const games = elSeason.games.filter(g => { const d = elDate(g); return d && !isNaN(d) && sameDay(d, day); });
@@ -408,11 +459,12 @@ function rowHTML(lg, e){
   const cls = s === "in" ? "live" : s === "post" ? "post" + (draw ? " draw" : "") : "pre";
   const open = S.open.has(e.id);
   const st = statusText(e, lg.sport);
-  const mid = hasScore ? esc(h.score) + " - " + esc(a.score) : esc(st || fmtTime.format(new Date(e.date)));
+  const long = hasScore && (String(h.score).length + String(a.score).length) > 4;
+  const mid = hasScore ? esc(h.score) + "\u2009-\u2009" + esc(a.score) : esc(st || fmtTime.format(new Date(e.date)));
   const sub = hasScore ? st : "";
   return '<button class="row ' + cls + '" type="button" data-id="' + esc(e.id) + '" data-lg="' + esc(lg.id) + '" aria-expanded="' + open + '">' +
     '<span class="h' + (h.winner ? " w" : "") + '">' + esc(nameOf(h)) + "</span>" + crest(h) +
-    '<span class="mid"><span class="sc">' + mid + "</span>" + (sub ? '<span class="st">' + esc(sub) + "</span>" : "") + "</span>" +
+    '<span class="mid"><span class="sc' + (long ? " long" : "") + '">' + mid + "</span>" + (sub ? '<span class="st">' + esc(sub) + "</span>" : "") + "</span>" +
     crest(a) + '<span class="a' + (a.winner ? " w" : "") + '">' + esc(nameOf(a)) + "</span></button>" +
     '<div class="ex"' + (open ? "" : " hidden") + ">" + (open ? detailHTML(lg, e) : "") + "</div>";
 }
