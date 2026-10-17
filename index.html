@@ -23,12 +23,13 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 
 /* Cabecera: día anterior · día · día siguiente */
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg)}
-.top .bar{display:grid;grid-template-columns:36px 40px 1fr 40px 36px;align-items:center;padding-block:10px 6px}
-.filters{display:flex;justify-content:center;gap:6px;padding-block:2px 10px}
-.filters button{padding:6px 13px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px;box-shadow:inset 0 0 0 1px var(--line)}
-.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
-.filters .ld{width:6px;height:6px;border-radius:50%;background:var(--live)}
-.filters .ct{font-variant-numeric:tabular-nums;font-weight:500;opacity:.75}
+.top .bar{display:grid;grid-template-columns:40px 40px 1fr 40px 40px;align-items:center;padding-block:10px 6px}
+.ico{width:40px;height:40px;display:grid;place-items:center;border-radius:50%;color:var(--muted)}
+.ico svg{width:22px;height:22px}
+.ico[aria-pressed="true"]{background:var(--soft);color:var(--ink)}
+#fLive[aria-pressed="true"]{color:var(--live)}
+.day small.lv{color:var(--live);font-weight:600}
+.day small.dn{color:var(--ink);font-weight:600}
 .arrow{width:40px;height:40px;display:grid;place-items:center;color:var(--ink);border-radius:50%}
 .arrow svg{width:22px;height:22px}
 .arrow:active{background:var(--soft)}
@@ -68,7 +69,9 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 .empty b{display:block;color:var(--ink);font-weight:600;font-size:16px;margin-bottom:4px}
 .empty button{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:2px;margin-top:6px}
 .note{font-size:12.5px;color:var(--muted);margin:18px 0 0}
-.foot{display:block;width:100%;text-align:center;font-size:12px;color:var(--muted);padding:26px 0 22px}
+.foot{display:flex;justify-content:center;align-items:center;gap:16px;font-size:12px;color:var(--muted);padding:26px 0 22px}
+.foot button{color:var(--muted);display:flex;align-items:center;gap:6px}
+.foot svg{width:18px;height:18px}
 .sk{height:40px;margin:2px 0;border-radius:8px;background:var(--soft)}
 
 /* Selector de ligas */
@@ -86,7 +89,9 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 
 <header class="top band">
   <div class="wrap bar">
-    <span aria-hidden="true"></span>
+    <button class="ico" id="fLive" type="button" data-filter="live" aria-pressed="false" aria-label="Solo en directo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".4"/></svg>
+    </button>
     <button class="arrow" id="prevBtn" type="button" aria-label="Día anterior">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
@@ -94,14 +99,9 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
     <button class="arrow" id="nextBtn" type="button" aria-label="Día siguiente">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
     </button>
-    <button class="gear" id="gearBtn" type="button" aria-label="Elegir ligas">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+    <button class="ico" id="fDone" type="button" data-filter="done" aria-pressed="false" aria-label="Solo finalizados">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
     </button>
-  </div>
-  <div class="wrap filters" id="filters" role="group" aria-label="Filtrar partidos de hoy" hidden>
-    <button type="button" data-filter="all" aria-pressed="true">Todos</button>
-    <button type="button" data-filter="live" aria-pressed="false"><span class="ld" aria-hidden="true"></span>En directo <span class="ct" id="ctLive"></span></button>
-    <button type="button" data-filter="done" aria-pressed="false">Finalizados <span class="ct" id="ctDone"></span></button>
   </div>
 </header>
 
@@ -109,7 +109,10 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
   <div class="wrap">
     <div class="strip" id="strip" hidden>Datos de ejemplo, sin conexión con el servidor. <button type="button" id="retryBtn">Reintentar</button></div>
     <main id="main" aria-live="polite"></main>
-    <button class="foot" id="syncBtn" type="button"></button>
+    <div class="foot">
+      <button id="syncBtn" type="button"></button>
+      <button id="gearBtn" type="button" aria-label="Elegir ligas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>Ligas</button>
+    </div>
   </div>
 </div>
 
@@ -455,7 +458,8 @@ function renderDay(){
   const rel = S.off === 0 ? "Hoy" : S.off === -1 ? "Ayer" : S.off === 1 ? "Mañana" : "";
   const full = cap(fmtDay.format(d));
   const btn = document.getElementById("dayBtn");
-  btn.innerHTML = rel ? esc(rel) + "<small>" + esc(full) + "</small>" : esc(full.split(",")[0]) + "<small>" + esc(full.split(",").slice(1).join(",").trim()) + "</small>";
+  const tag = S.off === 0 && S.filter === "live" ? '<small class="lv">En directo</small>' : S.off === 0 && S.filter === "done" ? '<small class="dn">Finalizados</small>' : "";
+  btn.innerHTML = tag ? esc(rel) + tag : rel ? esc(rel) + "<small>" + esc(full) + "</small>" : esc(full.split(",")[0]) + "<small>" + esc(full.split(",").slice(1).join(",").trim()) + "</small>";
   btn.setAttribute("aria-label", (rel ? rel + ", " : "") + full + (S.off !== 0 ? ". Toca para volver a hoy" : ""));
   btn.disabled = S.off === 0;
 }
@@ -465,12 +469,11 @@ function render(){
   const main = document.getElementById("main");
   if (!S.selected.size) { main.innerHTML = '<div class="empty"><b>Sin ligas</b><button type="button" data-pick>Elegir ligas</button></div>'; renderSync(); return; }
   const all = dayItems(S.off);
-  const nLive = all.filter(x => stateOf(x.e) === "in").length, nDone = all.filter(x => stateOf(x.e) === "post").length;
-  const fbox = document.getElementById("filters");
-  fbox.hidden = S.off !== 0;
-  fbox.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.filter === S.filter)));
-  document.getElementById("ctLive").textContent = nLive || "";
-  document.getElementById("ctDone").textContent = nDone || "";
+  ["fLive", "fDone"].forEach(id => {
+    const b = document.getElementById(id);
+    b.style.visibility = S.off === 0 ? "" : "hidden";
+    b.setAttribute("aria-pressed", String(S.off === 0 && S.filter === b.dataset.filter));
+  });
   const want = S.off === 0 ? S.filter : "all";
   const items = want === "live" ? all.filter(x => stateOf(x.e) === "in") : want === "done" ? all.filter(x => stateOf(x.e) === "post") : all;
   if (!S.demo && !all.length && selLeagues().some(lg => !S.cache.has(key(lg.id, S.off)))) {
@@ -539,10 +542,10 @@ document.getElementById("prevBtn").addEventListener("click", () => goDay(-1));
 document.getElementById("nextBtn").addEventListener("click", () => goDay(1));
 document.getElementById("dayBtn").addEventListener("click", () => { if (S.off !== 0) goDay(0); });
 document.getElementById("gearBtn").addEventListener("click", openPicker);
-document.getElementById("filters").addEventListener("click", ev => {
-  const b = ev.target.closest("[data-filter]"); if (!b) return;
-  S.filter = b.dataset.filter; saveFilter(); window.scrollTo(0, 0); render();
-});
+["fLive", "fDone"].forEach(id => document.getElementById(id).addEventListener("click", ev => {
+  const f = ev.currentTarget.dataset.filter;
+  S.filter = S.filter === f ? "all" : f; saveFilter(); window.scrollTo(0, 0); render();
+}));
 document.getElementById("main").addEventListener("click", ev => {
   if (ev.target.closest("[data-pick]")) { openPicker(); return; }
   const row = ev.target.closest(".row"); if (!row) return;
