@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex"><meta name="googlebot" content="noindex, nofollow"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Directos"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="icon-180.png?v=2"><link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=2"><link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2"><style>:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex"><meta name="googlebot" content="noindex, nofollow"><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' https://a.espncdn.com https://media-cdn.incrowdsports.com https://media-cdn.cortextech.io; connect-src https://site.api.espn.com https://api-live.euroleague.net https://live.euroleague.net https://feeds.incrowdsports.com; base-uri 'none'; form-action 'none'"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Directos"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="icon-180.png?v=2"><link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=2"><link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2"><style>:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
 <title>Mis Directos</title>
 <style>
 /* Layout: lista plana; una fila por partido con escudos a ambos lados del marcador; grupos por competición; cabecera = navegación por días */
@@ -48,7 +48,7 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 .h{text-align:right}
 .mid{display:flex;flex-direction:column;align-items:center;line-height:1.15;min-width:0}
 .sc{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.st{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.st{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .live .sc,.live .st{color:var(--live)}
 .live .st{font-weight:600}
 .pre .sc{font-size:15px;font-weight:500;color:var(--muted)}
@@ -78,7 +78,7 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 .sk{height:40px;margin:2px 0;border-radius:8px;background:var(--soft)}
 
 /* Selector de ligas */
-.picker{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+.picker{position:fixed;inset:0;z-index:20;overscroll-behavior:contain;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 .picker h1{font-size:26px;font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:22px 0 22px;text-wrap:balance}
 .sport{margin:0 0 20px}
 .sport h2{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
@@ -111,7 +111,7 @@ button{font:inherit;color:inherit;appearance:none;-webkit-appearance:none;border
 <div class="band">
   <div class="wrap">
     <div class="strip" id="strip" hidden>Datos de ejemplo, sin conexión con el servidor. <button type="button" id="retryBtn">Reintentar</button></div>
-    <main id="main" aria-live="polite"></main>
+    <main id="main"></main>
     <div class="foot">
       <button id="syncBtn" type="button"></button>
       <button id="gearBtn" type="button" aria-label="Elegir ligas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>Ligas</button>
@@ -160,7 +160,7 @@ const LEAGUES = [
   { id: "nfl", sport: "football", name: "NFL" },
   { id: "nba", sport: "basketball", name: "NBA" },
   { id: "wnba", sport: "basketball", name: "WNBA" },
-  { id: "mens-college-basketball", sport: "basketball", name: "NCAA" },
+  { id: "mens-college-basketball", sport: "basketball", name: "NCAA", halves: true },
   { id: "college-football", sport: "football", name: "NCAA Football" },
   { id: "esp.2", sport: "soccer", name: "LaLiga Hypermotion" }
 ];
@@ -169,7 +169,7 @@ const CACHE_KEY = "misdirectos.datos.v1";
 const EL_KEY = "misdirectos.euroliga.v1";
 const saved = loadSelection();
 const S = { off: 0, filter: loadFilter(), selected: new Set(saved || MY_LEAGUES), cache: new Map(), open: new Set(), failed: new Set(),
-  demo: false, offline: false, everOk: false, loading: false, pending: false, lastSync: null };
+  demo: false, offline: false, everOk: false, loading: false, loadingOff: 0, tried: null, pending: false, lastSync: null };
 
 /* Guarda lo último descargado para abrir al instante */
 let persistT = null;
@@ -181,7 +181,7 @@ function persist(){
     try {
       const keep = keepDays(), d = {};
       for (const [k, v] of S.cache) if (keep.has(k.split("|")[1])) d[k] = v;
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ at: (S.lastSync || new Date()).getTime(), d }));
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ at: (S.lastSync || new Date()).getTime(), d, pf: prefetched }));
     } catch (e) {}
   }, 500);
 }
@@ -192,6 +192,7 @@ function hydrate(){
     const keep = keepDays(); let n = 0;
     for (const k in j.d) if (keep.has(k.split("|")[1])) { S.cache.set(k, j.d[k]); n++; }
     if (n) { S.everOk = true; S.lastSync = new Date(j.at); }
+    if (j.pf) for (const t in j.pf) if (keep.has(t)) prefetched[t] = j.pf[t];
   } catch (e) {}
 }
 
@@ -233,8 +234,10 @@ function ymd(d){ return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate(
 function dayAt(off){ const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + off); return d; }
 function sameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 function key(id, off){ return id + "|" + ymd(dayAt(off)); }
+function keyTag(id, tag){ return id + "|" + tag; }
 function selLeagues(){ return LEAGUES.filter(l => S.selected.has(l.id)); }
 function stateOf(e){ return (e && e.status && e.status.type && e.status.type.state) || "pre"; }
+function isOff(e){ return /POSTPONED|CANCEL|ABANDONED/.test((e && e.status && e.status.type && e.status.type.name) || ""); }
 const fmtTime = new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" });
 const fmtDay = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
 const fmtShort = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
@@ -260,16 +263,26 @@ async function fetchJSON(url, ms){
 async function fetchEspn(lg, off){
   const day = dayAt(off);
   const base = ESPN + "/" + lg.sport + "/" + lg.id + "/scoreboard?limit=300&dates=";
-  /* ESPN agrupa por fecha de EE. UU. (ya no acepta rangos): el día anterior trae los partidos de madrugada */
+  /* ESPN agrupa por fecha de EE. UU. (ya no acepta rangos): en ligas de América el día anterior trae los partidos de madrugada */
+  const want = e => sameDay(new Date(e.date), day) || (off === 0 && stateOf(e) === "in");
   const [prev, cur] = await Promise.all([
-    fetchJSON(base + ymd(dayAt(off - 1))).catch(() => ({})),
-    fetchJSON(base + ymd(day))
+    EUROPE.test(lg.id) ? [] : espnPrev(base, lg.id, ymd(dayAt(off - 1)), want),
+    fetchJSON(base + ymd(day)).then(j => j.events || [])
   ]);
   const seen = new Set();
-  return (prev.events || []).concat(cur.events || []).filter(e => {
+  return prev.concat(cur).filter(e => {
     if (seen.has(e.id)) return false; seen.add(e.id);
-    return sameDay(new Date(e.date), day) || (off === 0 && stateOf(e) === "in");
+    return want(e);
   }).sort(byDate).map(slim);
+}
+const EUROPE = /^(esp|eng|ita|ger|fra|por|ned|uefa)\./;
+/* El día anterior solo se vuelve a pedir si trae partidos de hoy sin acabar, o cada 10 min */
+const PREV = new Map();
+async function espnPrev(base, id, tag, want){
+  const k = id + "|" + tag, c = PREV.get(k);
+  if (c && Date.now() - c.at < 10 * 60000 && !c.evs.some(e => want(e) && stateOf(e) !== "post")) return c.evs;
+  try { const evs = (await fetchJSON(base + tag)).events || []; PREV.set(k, { at: Date.now(), evs }); return evs; }
+  catch (e) { return c ? c.evs : []; }
 }
 
 /* ---------- Euroliga: API oficial ---------- */
@@ -305,8 +318,17 @@ function applyHeader(ev, hd){
   const sa = String(hd.ScoreA == null ? "" : hd.ScoreA).trim(), sb = String(hd.ScoreB == null ? "" : hd.ScoreB).trim();
   const live = hd.Live === true || hd.Live === "true";
   const q = parseInt(String(hd.Quarter || "").replace(/\D/g, ""), 10) || 0;
-  const lines = [1, 2, 3, 4].map(i => ({ h: hd["ScoreQuarter" + i + "A"], a: hd["ScoreQuarter" + i + "B"] })).filter(x => x.h != null && x.h !== "");
-  if (lines.length) { h.linescores = lines.map(x => ({ value: x.h })); a.linescores = lines.map(x => ({ value: x.a })); }
+  /* El Header da marcadores acumulados al final de cada cuarto (y de la prórroga): se pasan a parciales */
+  const num = v => Number(v) || 0;
+  const cA = [1, 2, 3, 4].map(i => num(hd["ScoreQuarter" + i + "A"])), cB = [1, 2, 3, 4].map(i => num(hd["ScoreQuarter" + i + "B"]));
+  if (num(hd.ScoreExtraTimeA) + num(hd.ScoreExtraTimeB) > 0) { cA.push(num(hd.ScoreExtraTimeA)); cB.push(num(hd.ScoreExtraTimeB)); }
+  let n = live && q ? Math.min(q, cA.length) : cA.length;
+  while (n > 0 && cA[n - 1] + cB[n - 1] === 0) n--;
+  for (let i = 1; i < n; i++) if (cA[i] < cA[i - 1] || cB[i] < cB[i - 1]) { n = i; break; }
+  if (n) {
+    h.linescores = cA.slice(0, n).map((v, i) => ({ value: v - (i ? cA[i - 1] : 0) }));
+    a.linescores = cB.slice(0, n).map((v, i) => ({ value: v - (i ? cB[i - 1] : 0) }));
+  }
   if (live) {
     if (sa !== "") { h.score = sa; a.score = sb; }
     ev.status = { period: q, displayClock: String(hd.RemainingPartialTime || "").replace(/^0(\d)/, "$1"), type: { name: "STATUS_IN_PROGRESS", state: "in" } };
@@ -323,7 +345,7 @@ function feedSide(x, live, played, win){
   const c = { id: x.code, team: { id: x.code, displayName: x.name, shortDisplayName: x.abbreviatedName || x.editorialName || x.name, logo: x.imageUrls && x.imageUrls.crest } };
   if ((live || played) && x.score != null) c.score = String(x.score);
   if (played) c.winner = win;
-  if (lines.length) c.linescores = lines.map(v => ({ value: v }));
+  if ((live || played) && lines.length) c.linescores = lines.map(v => ({ value: v }));
   return c;
 }
 function feedToEvent(g){
@@ -339,22 +361,34 @@ function feedToEvent(g){
     : { type: { name: "STATUS_SCHEDULED", state: "pre" } };
   return { id: "el-" + (g.code || g.identifier), date: new Date(g.date).toISOString(), status, competitions: [{ competitors: [h, a] }] };
 }
+/* Sin jornada, el feed devuelve el final de la temporada: se busca por fechas la jornada del día pedido */
+const feedRounds = new Map();
+function feedRound(code, n){
+  const k = code + "|" + n, c = feedRounds.get(k);
+  if (c && Date.now() - c.at < 60000) return c.p;
+  const p = fetchJSON(EL_FEED + code + "/games?phaseTypeCode=RS&roundNumber=" + n, 20000).then(j => (j && j.data) || []);
+  feedRounds.set(k, { at: Date.now(), p });
+  p.catch(() => feedRounds.delete(k));
+  return p;
+}
+const roundOf = g => (g.round && g.round.round) || g.round;
 async function fetchEuroleagueFeed(off, code){
-  const day = dayAt(off);
-  const base = EL_FEED + code + "/games";
-  const first = await fetchJSON(base, 20000);
-  let games = (first && first.data) || [];
-  const rounds = games.map(g => (g.round && g.round.round) || g.round).filter(n => typeof n === "number");
-  if (rounds.length) {
-    const r = Math.max(...rounds);
-    const more = await Promise.all([r - 2, r - 1, r + 1, r + 2].filter(n => n > 0).map(n =>
-      fetchJSON(base + "?phaseTypeCode=RS&roundNumber=" + n, 20000).then(j => (j && j.data) || []).catch(() => [])));
-    more.forEach(list => { games = games.concat(list); });
+  const day = dayAt(off), end = dayAt(off + 1);
+  const k = code + "|max";
+  if (!feedRounds.has(k)) { const p = fetchJSON(EL_FEED + code + "/games", 20000); feedRounds.set(k, { at: Date.now(), p }); p.catch(() => feedRounds.delete(k)); }
+  const first = (await feedRounds.get(k).p || {}).data || [];
+  const nums = first.map(roundOf).filter(n => typeof n === "number");
+  let lo = 1, hi = nums.length ? Math.max(...nums) : 40;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    const ds = (await feedRound(code, mid)).map(g => new Date(g.date).getTime()).filter(t => !isNaN(t));
+    if (ds.length && Math.max(...ds) < day.getTime()) lo = mid + 1; else hi = mid;
   }
+  const lists = await Promise.all([lo - 1, lo, lo + 1].filter(n => n > 0).map(n => feedRound(code, n).catch(() => [])));
   const seen = new Set();
-  return games.filter(g => {
+  return [].concat(...lists).filter(g => {
     const id = g.code || g.identifier; if (seen.has(id)) return false; seen.add(id);
-    const d = new Date(g.date); return !isNaN(d) && sameDay(d, day);
+    const d = new Date(g.date); return !isNaN(d) && d >= day && d < end;
   }).map(feedToEvent).sort(byDate);
 }
 
@@ -371,9 +405,7 @@ async function fetchEuroleague(off){
   const code = elSeasonCode(day);
   const now = Date.now();
   if (!elSeason) elLoad();
-  const dayGames = () => elSeason.games.filter(g => { const d = elDate(g); return d && !isNaN(d) && sameDay(d, day); });
-  const stale = !elSeason || elSeason.code !== code || now - elSeason.at > 30 * 60000 ||
-    dayGames().some(g => !g.played && elDate(g).getTime() < now - 2 * 3600000 && now - elSeason.at > 5 * 60000);
+  const stale = !elSeason || elSeason.code !== code || now - elSeason.at > 30 * 60000;
   if (stale) {
     try {
       /* Una sola descarga de la temporada aunque se pidan varios días a la vez */
@@ -393,7 +425,7 @@ async function fetchEuroleague(off){
     const ev = elToEvent(g);
     const start = new Date(ev.date).getTime();
     if (!g.played && start <= now + 5 * 60000 && now - start < 6 * 3600000) {
-      try { applyHeader(ev, await fetchJSON(EL_LIVE + "?gamecode=" + g.gameCode + "&seasoncode=" + code)); } catch (e) {}
+      try { applyHeader(ev, await fetchJSON(EL_LIVE + "?gamecode=" + encodeURIComponent(g.gameCode) + "&seasoncode=" + code)); } catch (e) {}
     }
     return ev;
   }));
@@ -410,35 +442,41 @@ function prefetchNeighbors(){
     const tag = ymd(dayAt(o));
     if (prefetched[tag] && Date.now() - prefetched[tag] < 10 * 60000) return;
     prefetched[tag] = Date.now();
-    selLeagues().forEach(lg => fetchLeague(lg, o).then(evs => { S.cache.set(key(lg.id, o), evs); persist(); if (S.off === o) renderSoon(); }).catch(() => {}));
+    /* Escalonada para no lanzar decenas de peticiones a la vez */
+    selLeagues().forEach((lg, i) => setTimeout(() => {
+      if (ymd(dayAt(o)) !== tag) return;
+      fetchLeague(lg, o).then(evs => { S.cache.set(keyTag(lg.id, tag), evs); persist(); if (ymd(dayAt(S.off)) === tag) renderSoon(); }).catch(() => {});
+    }, (o < 0 ? 0 : 1500) + i * 120));
   });
 }
-async function refresh(){
-  if (S.loading) { S.pending = true; return; }
+async function refresh(force){
+  /* Si ya se está cargando el mismo día, no se encadena otra carga (salvo cambio de ligas) */
+  if (S.loading) { if (force || S.off !== S.loadingOff) S.pending = true; return; }
   const leagues = selLeagues();
   if (!leagues.length) { render(); return; }
-  const off = S.off;
-  S.loading = true; renderSync();
+  const off = S.off, tag = ymd(dayAt(off));
+  const same = () => ymd(dayAt(S.off)) === tag;
+  S.loading = true; S.loadingOff = off; renderSync();
   const failed = new Set(); let ok = 0;
   await Promise.all(leagues.map(lg => fetchLeague(lg, off)
     .then(evs => {
       if (S.demo) { S.cache.clear(); S.demo = false; }
       ok++; S.everOk = true; S.offline = false;
-      S.cache.set(key(lg.id, off), evs);
-      if (off === S.off) renderSoon();
+      S.cache.set(keyTag(lg.id, tag), evs);
+      if (same()) renderSoon();
     })
     .catch(() => failed.add(lg.id))));
   if (ok) {
-    for (const id of failed) if (!S.cache.has(key(id, off))) S.cache.set(key(id, off), []);
-    if (off === S.off) S.failed = failed;
+    if (same()) S.failed = failed;
     S.lastSync = new Date(); persist();
     if (off === 0) prefetchNeighbors();
   } else if (!S.everOk) {
     enterDemo();
   } else {
     S.offline = true;
-    for (const id of failed) if (!S.cache.has(key(id, off))) S.cache.set(key(id, off), []);
+    if (same()) S.failed = failed;
   }
+  if (same()) S.tried = tag;
   S.loading = false;
   render();
   if (S.pending) { S.pending = false; refresh(); }
@@ -517,35 +555,47 @@ function teams(e){
   return { c, h: l.find(x => x.homeAway === "home") || l[0] || {}, a: l.find(x => x.homeAway === "away") || l[1] || {} };
 }
 const LOGO_OK = new Set();
-window.__logoOk = src => LOGO_OK.add(src);
+const LOGO_HOSTS = new Set(["a.espncdn.com", "media-cdn.incrowdsports.com", "media-cdn.cortextech.io"]);
+/* Solo dominios conocidos; los de ESPN se piden a 60 px en vez de 500 px */
+function logoUrl(u){
+  let x; try { x = new URL(String(u || "")); } catch (e) { return ""; }
+  if (x.protocol !== "https:" || !LOGO_HOSTS.has(x.hostname)) return "";
+  if (x.hostname === "a.espncdn.com" && /^\/i\/teamlogos\/[\w\/.-]+\.png$/i.test(x.pathname)) return "https://a.espncdn.com/combiner/i?img=" + x.pathname + "&w=60&h=60";
+  return x.href;
+}
+document.addEventListener("load", ev => { const t = ev.target; if (t.tagName === "IMG" && t.parentNode.classList.contains("crest")) { t.parentNode.classList.add("ok"); LOGO_OK.add(t.getAttribute("src")); } }, true);
+document.addEventListener("error", ev => { const t = ev.target; if (t.tagName === "IMG" && t.parentNode && t.parentNode.classList.contains("crest")) t.remove(); }, true);
 function nameOf(cp){ const t = cp.team || {}; return t.shortDisplayName || t.displayName || "Por determinar"; }
 function crest(cp){
   const t = cp.team || {};
   const initial = (nameOf(cp).replace(/^(FC|CF|AC|SS|SL|AS|RC|CD|UD|SD|CA|RCD)\s+/i, "").charAt(0) || "·").toUpperCase();
-  const col = t.color ? "#" + String(t.color).replace("#", "") : "";
+  const hex = String(t.color || "").replace("#", "");
+  const col = /^[0-9a-f]{6}$/i.test(hex) ? "#" + hex : "";
   const style = col ? ' style="--c:' + esc(col) + ";--t:" + textOn(col) + '"' : "";
   /* Los escudos ya cargados se pintan directamente, sin pasar por la inicial (evita parpadeo al repintar) */
-  const ok = t.logo && LOGO_OK.has(t.logo);
-  const img = t.logo ? '<img alt="" src="' + esc(t.logo) + '" onload="this.parentNode.classList.add(\'ok\');window.__logoOk(this.getAttribute(\'src\'))" onerror="this.remove()">' : "";
+  const src = logoUrl(t.logo);
+  const ok = src && LOGO_OK.has(src);
+  const img = src ? '<img alt="" src="' + esc(src) + '">' : "";
   return '<span class="crest' + (ok ? " ok" : "") + '"' + style + ' aria-hidden="true">' + esc(initial) + img + "</span>";
 }
-function statusText(e, sport){
+function statusText(e, sport, periods){
+  periods = periods || 4;
   const st = e.status || {}; const t = st.type || {}; const n = t.name || ""; const s = t.state || "pre";
   if (/POSTPONED/.test(n)) return "Aplazado";
   if (/CANCEL/.test(n)) return "Cancelado";
-  if (/SUSPENDED|DELAYED/.test(n)) return "Suspendido";
+  if (/SUSPENDED|DELAYED|ABANDONED/.test(n)) return "Suspendido";
   if (s === "in") {
     if (/HALFTIME/.test(n)) return "Descanso";
     if (sport === "soccer") return st.displayClock || "En juego";
-    const p = st.period ? (st.period <= 4 ? st.period + "C" : "Prórroga") : "";
+    const p = st.period ? (st.period <= periods ? st.period + (periods === 2 ? "T" : "C") : "Pró.") : "";
     if (/END_PERIOD/.test(n)) return "Fin " + p;
     const clock = st.displayClock && st.displayClock !== "0:00" ? st.displayClock : "";
     return [p, clock].filter(Boolean).join(" · ") || "En juego";
   }
   if (s === "post") {
     const { h, a } = teams(e);
-    if (/PEN/.test(n)) return "Final" + (h.shootoutScore != null && a.shootoutScore != null ? " · pen. " + h.shootoutScore + "-" + a.shootoutScore : " (pen.)");
-    if (/AET|EXTRA_TIME/.test(n)) return "Final (prór.)";
+    if (/PEN/.test(n)) return h.shootoutScore != null && a.shootoutScore != null ? "Pen. " + h.shootoutScore + "-" + a.shootoutScore : "Penaltis";
+    if (/AET|EXTRA_TIME/.test(n) || (sport !== "soccer" && st.period > periods)) return "Prórroga";
     return "Final";
   }
   return "";
@@ -553,12 +603,12 @@ function statusText(e, sport){
 
 function rowHTML(lg, e){
   const { h, a } = teams(e);
-  const s = stateOf(e);
+  const s = isOff(e) ? "pre" : stateOf(e);
   const hasScore = s !== "pre" && h.score != null && a.score != null;
   const draw = s === "post" && !h.winner && !a.winner;
   const cls = s === "in" ? "live" : s === "post" ? "post" + (draw ? " draw" : "") : "pre";
   const open = S.open.has(e.id);
-  const st = statusText(e, lg.sport);
+  const st = statusText(e, lg.sport, lg.halves ? 2 : 4);
   const long = hasScore && (String(h.score).length + String(a.score).length) > 4;
   const mid = hasScore ? esc(h.score) + "\u2009-\u2009" + esc(a.score) : esc(st || fmtTime.format(new Date(e.date)));
   const sub = hasScore ? st : "";
@@ -600,7 +650,7 @@ async function espnLeaders(lg, e){
 }
 async function elLeaders(e){
   const code = String(e.id).replace(/^el-/, "");
-  const j = await fetchJSON("https://live.euroleague.net/api/Boxscore?gamecode=" + code + "&seasoncode=" + elSeasonCode(new Date(e.date)), 15000);
+  const j = await fetchJSON(EL_LIVE.replace("Header", "Boxscore") + "?gamecode=" + encodeURIComponent(code) + "&seasoncode=" + elSeasonCode(new Date(e.date)), 15000);
   const stats = j.Stats || j.stats || [];
   const { h, a } = teams(e);
   const out = {};
@@ -618,13 +668,16 @@ async function elLeaders(e){
 function extraFresh(e){
   const x = EXTRA.get(e.id);
   if (!x) return false;
-  return stateOf(e) === "post" ? !x.err : Date.now() - x.at < 30000;
+  if (x.err) return Date.now() - x.at < 30000;
+  if (stateOf(e) !== "post") return Date.now() - x.at < 90000;
+  return x.post;
 }
 const INFLIGHT = new Set();
 async function loadExtra(lg, e){
   if (lg.sport === "soccer" || stateOf(e) === "pre" || S.demo || extraFresh(e) || INFLIGHT.has(e.id)) return false;
   INFLIGHT.add(e.id);
-  try { EXTRA.set(e.id, { at: Date.now(), data: lg.src === "el" ? await elLeaders(e) : await espnLeaders(lg, e) }); }
+  const post = stateOf(e) === "post";
+  try { EXTRA.set(e.id, { at: Date.now(), post, data: lg.src === "el" ? await elLeaders(e) : await espnLeaders(lg, e) }); }
   catch (err) { const old = EXTRA.get(e.id); EXTRA.set(e.id, { at: Date.now(), err: true, data: old && old.data }); }
   finally { INFLIGHT.delete(e.id); }
   return true;
@@ -711,17 +764,22 @@ function render(){
     b.setAttribute("aria-pressed", String(S.off === 0 && S.filter === b.dataset.filter));
   });
   const want = S.off === 0 ? S.filter : "all";
-  const items = want === "live" ? all.filter(x => stateOf(x.e) === "in") : want === "done" ? all.filter(x => stateOf(x.e) === "post") : all;
-  if (!S.demo && !all.length && selLeagues().some(lg => !S.cache.has(key(lg.id, S.off)))) {
+  const items = want === "live" ? all.filter(x => stateOf(x.e) === "in") : want === "done" ? all.filter(x => stateOf(x.e) === "post" && !isOff(x.e)) : all;
+  const missing = selLeagues().filter(lg => !S.cache.has(key(lg.id, S.off))).length;
+  /* Esqueleto mientras se carga; si ya se intentó y no llegó ninguna liga, es que no hubo conexión */
+  const tried = !S.loading && S.tried === ymd(dayAt(S.off));
+  if (!S.demo && !all.length && missing && !tried) {
     main.innerHTML = '<div class="sk" style="margin-top:22px"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>';
     renderSync(); return;
   }
   let html;
-  if (items.length) html = groupsHTML(items);
+  const none = !S.demo && !all.length && missing === selLeagues().length;
+  if (none) html = '<div class="empty"><b>Sin conexión</b>No se han podido cargar los partidos de este día.</div>';
+  else if (items.length) html = groupsHTML(items);
   else if (want === "live") html = '<div class="empty"><b>Nada en directo ahora</b>Ninguna de tus ligas está jugando en este momento.</div>';
   else if (want === "done") html = '<div class="empty"><b>Aún no ha terminado ninguno</b>Los partidos acabados de hoy aparecerán aquí.</div>';
   else html = '<div class="empty"><b>Sin partidos</b>Tus ligas no juegan este día.</div>';
-  if (!S.demo && S.failed.size) {
+  if (!S.demo && !none && S.failed.size) {
     const names = selLeagues().filter(l => S.failed.has(l.id)).map(l => l.name);
     if (names.length) html += '<p class="note">No se pudo cargar: ' + esc(names.join(", ")) + "</p>";
   }
@@ -732,8 +790,9 @@ function render(){
 }
 function renderSync(){
   const el = document.getElementById("syncBtn");
+  el.hidden = !S.loading && (S.demo || !S.lastSync);
   if (S.loading) { el.textContent = "Actualizando…"; return; }
-  if (S.demo || !S.lastSync) { el.textContent = ""; return; }
+  if (el.hidden) { el.textContent = ""; return; }
   const t = S.lastSync, when = sameDay(t, dayAt(0)) ? "" : sameDay(t, dayAt(-1)) ? "ayer " : fmtShort.format(t) + " ";
   el.textContent = (S.offline ? "Sin conexión · " : "") + "Actualizado " + when + fmtTime.format(t);
 }
@@ -775,7 +834,7 @@ document.getElementById("pickDone").addEventListener("click", () => {
   document.getElementById("picker").hidden = true;
   document.body.style.overflow = "";
   document.getElementById("gearBtn").focus({ preventScroll: true });
-  render(); refresh();
+  render(); refresh(true);
 });
 
 /* ---------- eventos ---------- */
@@ -799,7 +858,9 @@ document.getElementById("main").addEventListener("click", ev => {
   loadExtra(lg, e).then(changed => { if (changed) updateOpenDetail(lg, e); });
 });
 let tx = null, ty = null;
-document.addEventListener("touchstart", ev => { if (ev.touches.length === 1) { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; } }, { passive: true });
+document.addEventListener("touchstart", ev => { if (ev.touches.length === 1) { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; } else tx = ty = null; }, { passive: true });
+/* Un pellizco (dos dedos) no cambia de día */
+document.addEventListener("touchmove", ev => { if (ev.touches.length > 1) tx = ty = null; }, { passive: true });
 document.addEventListener("touchend", ev => {
   if (tx == null || !document.getElementById("picker").hidden) { tx = ty = null; return; }
   const dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty;
@@ -807,7 +868,7 @@ document.addEventListener("touchend", ev => {
   if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy)) goDay(dx < 0 ? 1 : -1);
 }, { passive: true });
 document.getElementById("syncBtn").addEventListener("click", () => refresh());
-document.getElementById("retryBtn").addEventListener("click", () => { S.everOk = false; refresh(); });
+document.getElementById("retryBtn").addEventListener("click", () => { S.everOk = false; refresh(true); });
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && (S.demo || (S.lastSync && Date.now() - S.lastSync.getTime() > 15000))) refresh();
 });
