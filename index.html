@@ -1,6 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex"><meta name="googlebot" content="noindex, nofollow"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Directos"><meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="icon-180.png?v=2"><link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=2"><link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=2"><style>:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
 <title>Mis Directos</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: lista plana; una fila por partido con escudos a ambos lados del marcador; grupos por competición; cabecera = navegación por días */
 :root{
@@ -206,7 +205,7 @@ function slim(e){
     status: { period: st.period, displayClock: st.displayClock, type: pick(st.type, ["name", "state"]) },
     competitions: [{
       situation: c.situation ? Object.assign(pick(c.situation, ["downDistanceText", "possession", "isRedZone"]), c.situation.lastPlay ? { lastPlay: { text: c.situation.lastPlay.text } } : {}) : undefined,
-      competitors: (c.competitors || []).map(x => Object.assign(pick(x, ["id", "homeAway", "score", "winner"]), {
+      competitors: (c.competitors || []).map(x => Object.assign(pick(x, ["id", "homeAway", "score", "winner", "shootoutScore"]), {
         record: ((x.records || []).find(r => r.type === "total" || r.name === "overall") || (x.records || [])[0] || {}).summary,
         team: pick(x.team, ["id", "displayName", "shortDisplayName", "abbreviation", "logo", "color"]),
         linescores: (x.linescores || []).map(l => ({ value: l.displayValue != null ? l.displayValue : l.value }))
@@ -238,7 +237,8 @@ function selLeagues(){ return LEAGUES.filter(l => S.selected.has(l.id)); }
 function stateOf(e){ return (e && e.status && e.status.type && e.status.type.state) || "pre"; }
 const fmtTime = new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit" });
 const fmtDay = new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long" });
-const byDate = (x, y) => new Date(x.date) - new Date(y.date);
+const fmtShort = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short" });
+const byDate =(x, y) => new Date(x.date) - new Date(y.date);
 function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 function textOn(hex){
   const h = String(hex || "").replace("#", ""); if (h.length !== 6) return "#ffffff";
@@ -259,19 +259,21 @@ async function fetchJSON(url, ms){
 /* ---------- ESPN: fútbol, NBA, NFL… ---------- */
 async function fetchEspn(lg, off){
   const day = dayAt(off);
-  const base = ESPN + "/" + lg.sport + "/" + lg.id + "/scoreboard";
-  let data;
-  try { data = await fetchJSON(base + "?dates=" + ymd(dayAt(off - 1)) + "-" + ymd(dayAt(off + 1)) + "&limit=300"); }
-  catch (err) { if (!err.http) throw err; data = await fetchJSON(base + "?dates=" + ymd(day) + "&limit=300"); }
+  const base = ESPN + "/" + lg.sport + "/" + lg.id + "/scoreboard?limit=300&dates=";
+  /* ESPN agrupa por fecha de EE. UU. (ya no acepta rangos): el día anterior trae los partidos de madrugada */
+  const [prev, cur] = await Promise.all([
+    fetchJSON(base + ymd(dayAt(off - 1))).catch(() => ({})),
+    fetchJSON(base + ymd(day))
+  ]);
   const seen = new Set();
-  return (data.events || []).filter(e => {
+  return (prev.events || []).concat(cur.events || []).filter(e => {
     if (seen.has(e.id)) return false; seen.add(e.id);
     return sameDay(new Date(e.date), day) || (off === 0 && stateOf(e) === "in");
   }).sort(byDate).map(slim);
 }
 
 /* ---------- Euroliga: API oficial ---------- */
-let elSeason = null;
+let elSeason = null, elInflight = null;
 function elSeasonCode(d){ return "E" + (d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1); }
 function elDate(g){
   const s = g.utcDate || g.date;
@@ -374,11 +376,14 @@ async function fetchEuroleague(off){
     dayGames().some(g => !g.played && elDate(g).getTime() < now - 2 * 3600000 && now - elSeason.at > 5 * 60000);
   if (stale) {
     try {
-      const j = await fetchJSON(EL_GAMES + code + "/games", 25000);
-      const games = (Array.isArray(j) ? j : (j.data || j.games || [])).map(elSlim);
-      if (!games.length) throw new Error("vacío");
-      elSeason = { code, at: Date.now(), games };
-      try { localStorage.setItem(EL_KEY, JSON.stringify(elSeason)); } catch (e) {}
+      /* Una sola descarga de la temporada aunque se pidan varios días a la vez */
+      if (!elInflight || elInflight.code !== code) elInflight = { code, p: fetchJSON(EL_GAMES + code + "/games", 25000).then(j => {
+        const games = (Array.isArray(j) ? j : (j.data || j.games || [])).map(elSlim);
+        if (!games.length) throw new Error("vacío");
+        elSeason = { code, at: Date.now(), games };
+        try { localStorage.setItem(EL_KEY, JSON.stringify(elSeason)); } catch (e) {}
+      }).finally(() => { elInflight = null; }) };
+      await elInflight.p;
     } catch (e) {
       if (!elSeason || elSeason.code !== code) return fetchEuroleagueFeed(off, code);
     }
@@ -425,7 +430,8 @@ async function refresh(){
     .catch(() => failed.add(lg.id))));
   if (ok) {
     for (const id of failed) if (!S.cache.has(key(id, off))) S.cache.set(key(id, off), []);
-    S.failed = failed; S.lastSync = new Date(); persist();
+    if (off === S.off) S.failed = failed;
+    S.lastSync = new Date(); persist();
     if (off === 0) prefetchNeighbors();
   } else if (!S.everOk) {
     enterDemo();
@@ -510,14 +516,18 @@ function teams(e){
   const l = c.competitors || [];
   return { c, h: l.find(x => x.homeAway === "home") || l[0] || {}, a: l.find(x => x.homeAway === "away") || l[1] || {} };
 }
+const LOGO_OK = new Set();
+window.__logoOk = src => LOGO_OK.add(src);
 function nameOf(cp){ const t = cp.team || {}; return t.shortDisplayName || t.displayName || "Por determinar"; }
 function crest(cp){
   const t = cp.team || {};
   const initial = (nameOf(cp).replace(/^(FC|CF|AC|SS|SL|AS|RC|CD|UD|SD|CA|RCD)\s+/i, "").charAt(0) || "·").toUpperCase();
   const col = t.color ? "#" + String(t.color).replace("#", "") : "";
   const style = col ? ' style="--c:' + esc(col) + ";--t:" + textOn(col) + '"' : "";
-  const img = t.logo ? '<img alt="" src="' + esc(t.logo) + '" onload="this.parentNode.classList.add(\'ok\')" onerror="this.remove()">' : "";
-  return '<span class="crest"' + style + ' aria-hidden="true">' + esc(initial) + img + "</span>";
+  /* Los escudos ya cargados se pintan directamente, sin pasar por la inicial (evita parpadeo al repintar) */
+  const ok = t.logo && LOGO_OK.has(t.logo);
+  const img = t.logo ? '<img alt="" src="' + esc(t.logo) + '" onload="this.parentNode.classList.add(\'ok\');window.__logoOk(this.getAttribute(\'src\'))" onerror="this.remove()">' : "";
+  return '<span class="crest' + (ok ? " ok" : "") + '"' + style + ' aria-hidden="true">' + esc(initial) + img + "</span>";
 }
 function statusText(e, sport){
   const st = e.status || {}; const t = st.type || {}; const n = t.name || ""; const s = t.state || "pre";
@@ -532,7 +542,12 @@ function statusText(e, sport){
     const clock = st.displayClock && st.displayClock !== "0:00" ? st.displayClock : "";
     return [p, clock].filter(Boolean).join(" · ") || "En juego";
   }
-  if (s === "post") return "Final";
+  if (s === "post") {
+    const { h, a } = teams(e);
+    if (/PEN/.test(n)) return "Final" + (h.shootoutScore != null && a.shootoutScore != null ? " · pen. " + h.shootoutScore + "-" + a.shootoutScore : " (pen.)");
+    if (/AET|EXTRA_TIME/.test(n)) return "Final (prór.)";
+    return "Final";
+  }
   return "";
 }
 
@@ -719,14 +734,15 @@ function renderSync(){
   const el = document.getElementById("syncBtn");
   if (S.loading) { el.textContent = "Actualizando…"; return; }
   if (S.demo || !S.lastSync) { el.textContent = ""; return; }
-  el.textContent = (S.offline ? "Sin conexión · " : "") + "Actualizado " + fmtTime.format(S.lastSync);
+  const t = S.lastSync, when = sameDay(t, dayAt(0)) ? "" : sameDay(t, dayAt(-1)) ? "ayer " : fmtShort.format(t) + " ";
+  el.textContent = (S.offline ? "Sin conexión · " : "") + "Actualizado " + when + fmtTime.format(t);
 }
 function goDay(delta){
   S.off = delta === 0 ? 0 : S.off + delta;
   S.failed = new Set();
   window.scrollTo(0, 0);
   render();
-  if (!S.demo) refresh();
+  refresh();
 }
 
 /* ---------- selector de ligas ---------- */
@@ -740,6 +756,7 @@ function openPicker(){
   updateDone();
   document.getElementById("picker").hidden = false;
   document.body.style.overflow = "hidden";
+  const first = document.querySelector("#pickList .chip"); if (first) first.focus({ preventScroll: true });
 }
 function updateDone(){
   const done = document.getElementById("pickDone");
@@ -757,6 +774,7 @@ document.getElementById("pickDone").addEventListener("click", () => {
   S.selected = draft; saveSelection();
   document.getElementById("picker").hidden = true;
   document.body.style.overflow = "";
+  document.getElementById("gearBtn").focus({ preventScroll: true });
   render(); refresh();
 });
 
@@ -791,9 +809,9 @@ document.addEventListener("touchend", ev => {
 document.getElementById("syncBtn").addEventListener("click", () => refresh());
 document.getElementById("retryBtn").addEventListener("click", () => { S.everOk = false; refresh(); });
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && !S.demo && S.lastSync && Date.now() - S.lastSync.getTime() > 15000) refresh();
+  if (!document.hidden && (S.demo || (S.lastSync && Date.now() - S.lastSync.getTime() > 15000))) refresh();
 });
-setInterval(() => { if (!document.hidden && !S.demo && S.off === 0 && document.getElementById("picker").hidden) refresh(); }, 30000);
+setInterval(() => { if (!document.hidden && S.off === 0 && document.getElementById("picker").hidden) refresh(); }, 30000);
 
 hydrate();
 render();
